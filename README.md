@@ -1,44 +1,179 @@
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+# Pré-réquis
+## Instalation des librairies
+- redux
+- react-redux
+- redux-thunk (pour pouvoir utiliser des fonctions en tant qu'action)
+- redux-logger (uniquement en dev pour surveiller le changement de state redux)
+## Creer la structure des repertoires
+```javascript
+"/"
+"/store"
+"/store/index.jx"                 // contient le store et toute la configuration
+"/store/actions"
+"/store/actions/auth.js"          // exemple d'action possible
+"/store/reducers"
+"/store/reducers/index.js"        // contient le combine reducer
+"/store/reducers/authReducer.js"  // exemple de reducer (lié à l'action auth)
+```
 
-## Available Scripts
+# Actions
+## creation de(s) l'action(s)
+/store/actions/auth.js
+```javascript
+export function authAction(userData) {
+  return {
+    type: 'AUTH_USER',
+    payload: {userData}
+  }
+}
+```
+Lorsque cette action sera exécuté elle renvera 'AUTH_USER' afin d'être indentifié par le  reducer a qui elle transmettra le payload
 
-In the project directory, you can run:
 
-### `npm start`
+# Reducer
+## creation de(s) reducer(s)
+/store/reducers/authReducer.js
+```javascript
+// Initialisation d'une variable contenant les la structure des states par defaut 
+const defaultStates = {
+  user: {
+    userData: {
+      user: '',
+      isAdmin: false,
+      id: 0,
+      token: '',
+      isConnected: false
+    }
+  }
+}
+// Creation du reducer lié au auth, cependant celui-ci pourrait très bien répondre à d'autres actions
+export default (state = defaultStates, action) => {
+  switch (action.type) {
+    case 'AUTH_USER':
+    return {
+      user: action.payload
+    }
+    default:
+      return state
+  }
+}
+```
+Chaques actions doient être liées à un reducer mais un reduceur peut répondre à plusieurs actions.
+Il faut quand même faire attention à rester organisé et créer un nouveau reducer pour chaque contexte (authentification, saisie d'un formulaire, multi-etape...)
 
-Runs the app in the development mode.<br>
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
 
-The page will reload if you make edits.<br>
-You will also see any lint errors in the console.
+## Combine reducers
+/store/reducers/index.js
+```javascript
+import { combineReducers } from 'redux';
 
-### `npm test`
+import authReducer from './authReducer';
+export default combineReducers({
+  authentification: authReducer
+});
+```
+Combine reducers comme sont nom l'indique rassemble tout les reducers pour ne nous retourner qu'un seul objet
 
-Launches the test runner in the interactive watch mode.<br>
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
 
-### `npm run build`
+# Le store
+## Création
+/store/index.js
+```javascript
+import { createStore, applyMiddleware } from 'redux';
+import thunk from 'redux-thunk';
+import logger from 'redux-logger';
+import allReducer from './reducers';
 
-Builds the app for production to the `build` folder.<br>
-It correctly bundles React in production mode and optimizes the build for the best performance.
+export default createStore(
+  allReducer,
+  applyMiddleware(thunk, logger)
+);
+```
+Le store rassemble les reducers les middleware et tout un tas d'autre chose peuvent y être gréffé comme un persisteur par exemple.
 
-The build is minified and the filenames include the hashes.<br>
-Your app is ready to be deployed!
+## Intégration
+/App.js
+```javascript
+import React, { Component } from 'react';
+import { Provider } from 'react-redux'
+import store from './store';
+import './App.css';
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+class App extends Component {
+  render() {
+    return (
+      <Provider store={store}>
+          <h1>Hello Redux</h1>
+      </Provider>
+    );
+  }
+}
 
-### `npm run eject`
+export default App;
+```
+Une fois la configuration fini il ne reste qu'a englober l'application react avec un `<Provider></Provider>` celui-ci attend une props `store` qui contiendra elle-même le store
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
+# Connexion des composants
+## Composant avec action
+/components/LoginForm.jsx
+```javascript
+import React, { Component } from 'react'
+// Import de l'action qui si executer appellera le reducer
+import {authAction} from '../store/actions/auth'
+// Import de connect qui va connecter le composant à redux
+import { connect } from 'react-redux';
 
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+class LoginForm extends Component {
+  render() {
+    return (
+      <div>
+        <button
+          // Appel de l'action authAction
+          onClick={() => this.props.authAction({userId: 1, isAdmin: true, username: 'Jh0n_D03', isConnected: true})}
+        >Click ME to login as Admin</button>
+      </div>
+    )
+  }
+}
 
-Instead, it will copy all the configuration files and the transitive dependencies (Webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
+// Fonction obligatoire qui va permettre de dispacher les données vers l'action puis vers le reducer
+const mapDispatchToProps = dispatch => ({
+  authAction: (userData) => dispatch(authAction(userData))
+})
+// Fonction qui permet de récupérer les states redux
+const mapStateToProps = state => ({
+  ...state
+})
+// Export par defaut du composant connecté à redux
+export default connect(mapStateToProps, mapDispatchToProps)(LoginForm);
+```
+Composant connecté dans les deux sens car il recoit les props de redux et peux aussi les modifier
 
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
+## Composant sans action
+/components/Profile.jsx
+```javascript
+import React, { Component } from 'react'
+import { connect } from 'react-redux';
 
-## Learn More
+class Profile extends Component {
+  render() {
+    console.log("props from Profile.jsx :", this.props)
+    return (
+      <div>
+        <h1>Hello Global Props</h1>
+      </div>
+    )
+  }
+}
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+const mapDispatchToProps = dispatch => ({})
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+const mapStateToProps = state => ({...state})
+
+export default connect(mapStateToProps, mapDispatchToProps)(Profile);
+```
+Si le composant a seulement besoin d'acceder aux states redux sans pour autant devoir interagir avec il suffit de passer un objet vide à la fonction dispatch
+
+# Remarque
+Ici nos deux composant (<LoginForm />  et <Profile/>) ne sont pas directement liés l'un à pourtant lorsque le premier modifie les states, le second se met automatiquement à jour.
+
