@@ -27,14 +27,14 @@ export function authAction(userData) {
   }
 }
 ```
-Lorsque cette action sera exécuté elle renvera 'AUTH_USER' afin d'être indentifié par le  reducer a qui elle transmettra le payload
+Lorsque cette action sera exécuté elle renvera 'AUTH_USER' afin d'être indentifié par le  reducer a qui elle transmetra le payload
 
 
 # Reducer
 ## creation de(s) reducer(s)
 /store/reducers/authReducer.js
 ```javascript
-// Initialisation d'une variable contenant les la structure des states par defaut 
+// Initialisation d'une variable contenant la structure des states par defaut 
 const defaultStates = {
   user: {
     userData: {
@@ -46,7 +46,7 @@ const defaultStates = {
     }
   }
 }
-// Creation du reducer lié au auth, cependant celui-ci pourrait très bien répondre à d'autres actions
+// Creation du reducer lié à l'action auth, cependant celui-ci pourrait très bien répondre à d'autres actions
 export default (state = defaultStates, action) => {
   switch (action.type) {
     case 'AUTH_USER':
@@ -72,7 +72,7 @@ export default combineReducers({
   authentification: authReducer
 });
 ```
-Combine reducers comme sont nom l'indique rassemble tout les reducers pour ne nous retourner qu'un seul objet
+Combine reducers comme sont nom l'indique rassemble tout les reducers pour ne retourner qu'un seul objet
 
 
 # Le store
@@ -89,7 +89,7 @@ export default createStore(
   applyMiddleware(thunk, logger)
 );
 ```
-Le store rassemble les reducers les middleware et tout un tas d'autre chose peuvent y être gréffé comme un persisteur par exemple.
+Le store rassemble les reducers, les middlewares et tout un tas d'autre chose peuvent y être gréffé comme un persisteur par exemple.
 
 ## Intégration
 /App.js
@@ -97,13 +97,19 @@ Le store rassemble les reducers les middleware et tout un tas d'autre chose peuv
 import React, { Component } from 'react';
 import { Provider } from 'react-redux'
 import store from './store';
+
 import './App.css';
+import LoginForm from './components/LoginForm';
+import Profile from './components/Profile';
 
 class App extends Component {
   render() {
     return (
       <Provider store={store}>
-          <h1>Hello Redux</h1>
+          <div>
+            <LoginForm/>
+            <Profile />
+          </div>
       </Provider>
     );
   }
@@ -111,7 +117,7 @@ class App extends Component {
 
 export default App;
 ```
-Une fois la configuration fini il ne reste qu'a englober l'application react avec un `<Provider></Provider>` celui-ci attend une props `store` qui contiendra elle-même le store
+Une fois la configuration fini il ne reste qu'a englober l'application react avec un `<Provider> YOUR APP HERE </Provider>` celui-ci attend une props `store` qui contiendra elle-même le store
 
 # Connexion des composants
 ## Composant avec action
@@ -136,7 +142,7 @@ class LoginForm extends Component {
   }
 }
 
-// Fonction obligatoire qui va permettre de dispacher les données vers l'action puis vers le reducer
+// Fonction qui va permettre de dispacher les données vers l'action puis vers le reducer
 const mapDispatchToProps = dispatch => ({
   authAction: (userData) => dispatch(authAction(userData))
 })
@@ -147,7 +153,7 @@ const mapStateToProps = state => ({
 // Export par defaut du composant connecté à redux
 export default connect(mapStateToProps, mapDispatchToProps)(LoginForm);
 ```
-Composant connecté dans les deux sens car il recoit les props de redux et peux aussi les modifier
+Composant connecté dans les deux sens car il recoit les states du store et peux aussi les modifier
 
 ## Composant sans action
 /components/Profile.jsx
@@ -175,5 +181,5 @@ export default connect(mapStateToProps, mapDispatchToProps)(Profile);
 Si le composant a seulement besoin d'acceder aux states redux sans pour autant devoir interagir avec il suffit de passer un objet vide à la fonction dispatch
 
 # Remarque
-Ici nos deux composant (<LoginForm />  et <Profile/>) ne sont pas directement liés l'un à pourtant lorsque le premier modifie les states, le second se met automatiquement à jour.
+Ici nos deux composant `<LoginForm />  et <Profile/>` ne sont pas directement liés l'un à pourtant lorsque le premier modifie les states, le second se met automatiquement à jour.
 
