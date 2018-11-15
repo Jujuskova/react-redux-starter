@@ -17,7 +17,7 @@
 ```
 
 # Actions
-## creation de(s) l'action(s)
+## Création de(s) l'action(s)
 /store/actions/auth.js
 ```javascript
 export function authAction(userData) {
@@ -31,7 +31,7 @@ Lorsque cette action sera exécuté elle renvera 'AUTH_USER' afin d'être indent
 
 
 # Reducer
-## creation de(s) reducer(s)
+## Création de(s) reducer(s)
 /store/reducers/authReducer.js
 ```javascript
 // Initialisation d'une variable contenant la structure des states par defaut 
