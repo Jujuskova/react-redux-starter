@@ -1,21 +1,24 @@
 import React, { Component } from 'react';
-import { Provider } from 'react-redux'
-import store from './store';
+
+import AdminTouter from './components/Admin/Router';
+import PublicRouter  from './components/Public/Router';
 
 import './App.css';
-import LoginForm from './components/LoginForm';
-import Profile from './components/Profile';
 
 class App extends Component {
   render() {
-    console.log("default state :", store.getState())
+    console.log(this.props)
     return (
-      <Provider store={store}>
-          <div>
-            <LoginForm/>
-            <Profile />
-          </div>
-      </Provider>
+      <div>
+        {
+          !window.location.href.includes('admin') && 
+          <PublicRouter />
+        }
+        {
+          window.location.href.includes('admin') &&
+          <AdminTouter />
+        }
+      </div>
     );
   }
 }
